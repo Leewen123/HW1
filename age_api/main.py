@@ -1,7 +1,9 @@
 import time
 import logging
+import os
 from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from models.age_predictor import AgePredictor
 from utils.image_utils import decode_image
@@ -24,7 +26,16 @@ except Exception as e:
     logger.error(f"Failed to initialize AgePredictor: {e}")
     predictor = None
 
+# Mount the static directory to serve frontend assets
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
 @app.get("/")
+def serve_ui():
+    """Serves the web UI index page."""
+    return FileResponse(os.path.join(static_dir, "index.html"))
+
+@app.get("/health")
 def health_check():
     """Health check endpoint for orchestration tools (e.g., Kubernetes)."""
     return {
